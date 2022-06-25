@@ -1,0 +1,16 @@
+node_modules
+test
+.vscode
+.git
+docker
+
+# file
+.dockerignore
+.gitignore
+.prettierrc
+.gitlab-ci.yml
+.eslintrc.js
+docker-compose.yml
+Dockerfile
+README.md
+
