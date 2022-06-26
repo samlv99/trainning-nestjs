@@ -12,3 +12,11 @@ services:
     volumes:
       - ./:/usr/src/app
     command: ['npm', 'run', 'start:dev']
+
+  gitlab-runner:
+    image: 'gitlab/gitlab-runner:latest'
+    container_name: app_gitlab_runner
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./gilab-runner-config:/etc/gitlab-runner
+    restart: unless-stopped
