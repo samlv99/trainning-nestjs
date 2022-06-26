@@ -47,5 +47,6 @@ ssh:
       ssh -t -t $SSH_SERVER_USER@$SSH_SERVER_IP
       "cd ${PATH_TO_PROJECT};
       git pull origin develop;
+      docker-compose down;
       docker-compose up -d;
       "
