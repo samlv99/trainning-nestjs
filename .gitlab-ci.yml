@@ -1,0 +1,52 @@
+stages:
+  - test
+  - deploy
+
+cache:
+  paths:
+    - node_modules/
+
+lint:
+  stage: test
+  image: node:16-alpine
+  only:
+    - merge_requests
+  allow_failure: false
+  script:
+    - yarn install
+    - yarn run lint:fix
+
+ssh:
+  stage: deploy
+  only:
+    - develop
+  allow_failure: false
+  before_script:
+    # https://docs.gitlab.com/ee/ci/ssh_keys/#ssh-keys-when-using-the-docker-executor
+    # Install ssh-agent if not already installed, it is required by Docker.
+    # (change apt-get to yum if you use a CentOS-based image)
+    - 'which ssh-agent || ( apk update && apk add openssh-client )'
+    # Run ssh-agent (inside the build environment)
+    - eval $(ssh-agent -s)
+    # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
+    - echo "$SSH_PRIVATE_KEY" | ssh-add -
+    # For Docker builds disable host key checking. Be aware that by adding that
+    # you are suspectible to man-in-the-middle attacks.
+    # WARNING: Use this only with the Docker executor, if you use it with shell
+    # you will overwrite your user's SSH config.
+    - mkdir -p ~/.ssh
+    - ssh-keyscan -H $SSH_SERVER_IP >> ~/.ssh/known_hosts
+    - chmod 600 ~/.ssh/known_hosts
+  script:
+    # -T      Disable pseudo-tty allocation.
+    # -t      Force pseudo-tty allocation.  This can be used to execute arbitrary 
+    #         screen-based programs on a remote machine, which can be very useful,
+    #         e.g. when implementing menu services.  Multiple -t options force tty
+    #         allocation, even if ssh has no local tty.
+    - >
+      ssh -t -t $SSH_SERVER_USER@$SSH_SERVER_IP
+      "cd ${PATH_TO_PROJECT};
+      git pull origin develop;
+      docker-compose down;
+      docker-compose up -d;
+      "
